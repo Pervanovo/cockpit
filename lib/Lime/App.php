@@ -1151,11 +1151,11 @@ class App implements \ArrayAccess {
 
     // Array Access implementation
 
-    public function offsetSet($key, $value) {
+    public function offsetSet(mixed $key, mixed $value): void {
         $this->registry[$key] = $value;
     }
 
-    public function offsetGet($key) {
+    public function offsetGet(mixed $key): mixed {
 
         $value = $this->retrieve($key, null);
 
@@ -1166,11 +1166,11 @@ class App implements \ArrayAccess {
         return $value;
     }
 
-    public function offsetExists($key) {
+    public function offsetExists(mixed $key): bool {
         return isset($this->registry[$key]);
     }
 
-    public function offsetUnset($key) {
+    public function offsetUnset(mixed $key): void {
         unset($this->registry[$key]);
     }
 

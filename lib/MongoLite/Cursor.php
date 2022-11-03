@@ -245,27 +245,27 @@ class Cursor implements \Iterator {
     /**
      * Iterator implementation
      */
-    public function rewind() {
+    public function rewind(): void {
 
         if ($this->position!==false) {
             $this->position = 0;
         }
     }
 
-    public function current() {
+    public function current(): mixed {
 
         return $this->data[$this->position];
     }
 
-    public function key() {
+    public function key(): mixed {
         return $this->position;
     }
 
-    public function next() {
+    public function next(): void {
         ++$this->position;
     }
 
-    public function valid() {
+    public function valid(): bool {
 
         if ($this->position===false) {
 

@@ -49,7 +49,7 @@ class ContainerArray implements  ArrayAccess, Countable, IteratorAggregate, Json
         return $this->fetch_from_array($key, $default);
     }
 
-    public function count() {
+    public function count(): int {
         return count($this->props);
     }
 
@@ -57,7 +57,7 @@ class ContainerArray implements  ArrayAccess, Countable, IteratorAggregate, Json
         return $this->props;
     }
 
-    public function getIterator() {
+    public function getIterator(): Traversable {
         return clone $this->props;
     }
 
@@ -89,7 +89,7 @@ class ContainerArray implements  ArrayAccess, Countable, IteratorAggregate, Json
 
     // Array Access implementation
 
-    public function offsetSet($key, $value) {
+    public function offsetSet(mixed $key, mixed $value): void {
 
         if (strpos($key, '/')) {
 
@@ -112,16 +112,16 @@ class ContainerArray implements  ArrayAccess, Countable, IteratorAggregate, Json
         }
     }
 
-    public function offsetGet($key) {
+    public function offsetGet(mixed $key): mixed {
 
         return $this->get($key, null);
     }
 
-    public function offsetExists($key) {
+    public function offsetExists(mixed $key): bool {
         return $this->get($key, null)===null ? false : true;
     }
 
-    public function offsetUnset($key) {
+    public function offsetUnset(mixed $key): void {
 
         if (isset($this->props[$key])) {
 
@@ -402,7 +402,7 @@ class ContainerArray implements  ArrayAccess, Countable, IteratorAggregate, Json
         return true;
     }
 
-    public function jsonSerialize() {
+    public function jsonSerialize(): mixed {
         return $this->props;
     }
 
