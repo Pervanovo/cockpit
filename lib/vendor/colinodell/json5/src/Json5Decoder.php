@@ -73,9 +73,13 @@ final class Json5Decoder
         // Try parsing with json_decode first, since that's much faster
         // We only attempt this on PHP 7+ because 5.x doesn't parse some edge cases correctly
         if (PHP_VERSION_ID >= 70000) {
-            $result = \json_decode($source, $associative, $depth, $options);
-            if (\json_last_error() === \JSON_ERROR_NONE) {
-                return $result;
+            try {
+                $result = \json_decode($source, $associative, $depth, $options);
+                if (\json_last_error() === \JSON_ERROR_NONE) {
+                    return $result;
+                }
+            } catch (\Throwable $e) {
+                // ignore exception, continue parsing as JSON5
             }
         }
 
@@ -135,7 +139,7 @@ final class Json5Decoder
         }
 
         $this->at++;
-        
+
         return $this->currentByte = $this->getByte($this->at);
     }
 
@@ -287,19 +291,22 @@ final class Json5Decoder
         }
 
         if ($sign === '-') {
-            $number = -1 * $number;
+            $number = '-' . $number;
         }
 
         if (!\is_numeric($number) || !\is_finite($number)) {
             $this->throwSyntaxError('Bad number');
         }
 
-        if ($this->castBigIntToString) {
+        // Adding 0 will automatically cast this to an int or float
+        $asIntOrFloat = $number + 0;
+
+        $isIntLike = preg_match('/^-?\d+$/', $number) === 1;
+        if ($this->castBigIntToString && $isIntLike && is_float($asIntOrFloat)) {
             return $number;
         }
 
-        // Adding 0 will automatically cast this to an int or float
-        return $number + 0;
+        return $asIntOrFloat;
     }
 
     private function string()
@@ -317,7 +324,15 @@ final class Json5Decoder
 
             if ($this->currentByte === '\\') {
                 if ($this->peek() === 'u' && $unicodeEscaped = $this->match('/^(?:\\\\u[A-Fa-f0-9]{4})+/')) {
-                    $string .= \json_decode('"'.$unicodeEscaped.'"');
+                    try {
+                        $unicodeUnescaped = \json_decode('"' . $unicodeEscaped . '"', false, 1, JSON_THROW_ON_ERROR);
+                        if ($unicodeUnescaped === null && ($err = json_last_error_msg())) {
+                            throw new \JsonException($err);
+                        }
+                        $string .= $unicodeUnescaped;
+                    } catch (\JsonException $e) {
+                        $this->throwSyntaxError($e->getMessage());
+                    }
                     continue;
                 }
 
