@@ -642,10 +642,10 @@ function cockpit_populate_collection(&$items, $maxlevel = -1, $level = 0, $field
         }
 
         if (is_array($items[$k])) {
-            $items[$k] = cockpit_populate_collection($items[$k], $maxlevel, ($level + 1), $fieldsFilter);
+            $items[$k] = cockpit_populate_collection($items[$k], $maxlevel, $level, $fieldsFilter);
         }
 
-        if ($level > 0 && isset($v['_id'], $v['link'])) {
+        if (($maxlevel === -1 || $level < $maxlevel) && isset($v['_id'], $v['link'])) {
             $link = $v['link'];
             $items[$k] = cockpit('collections')->_resolveLinkedItem($v['link'], (string)$v['_id'], $fieldsFilter);
             $items[$k]['_link'] = $link;
