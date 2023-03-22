@@ -54,23 +54,31 @@
             line-height: 1;
         }
 
+        .item-disabled {
+            opacity: 50%;
+        }
+
+        .text-strike {
+            text-decoration: line-through;
+        }
     </style>
 
 
     <div class="uk-sortable layout-components {!items.length && 'empty'}" ref="components" data-uk-sortable="animation:false, group:'field-layout-items'">
 
-        <div class="uk-panel-box uk-panel-card" each="{ item,idx in items }" data-idx="{idx}">
+        <div class="uk-panel-box uk-panel-card {item.settings.disabled ? 'item-disabled' : ''}" each="{ item,idx in items }" data-idx="{idx}">
 
             <div class="uk-flex uk-flex-middle uk-text-small uk-visible-hover">
                 <img class="uk-margin-small-right" riot-src="{ parent.components[item.component].icon ? parent.components[item.component].icon : App.base('/assets/app/media/icons/component.svg')}" width="16">
                 <div class="uk-text-truncate uk-flex-item-1">
-                    <a class="uk-text-bold uk-link-muted" onclick="{ parent.settings }">{ itemDisplayName(item, parent) }</a>
+                    <a class="uk-text-bold uk-link-muted {item.settings.disabled ? 'text-strike' : ''}" onclick="{ parent.settings }">{ itemDisplayName(item, parent) }</a>
                     <span class="uk-text-muted uk-badge uk-badge-outline field-layout-component-badge uk-margin-small-left" if="{item.name}">{ componentDisplayName(item.component, parent) }</span>
                 </div>
                 <div class="uk-text-small uk-invisible">
-                    <a onclick="{ parent.cloneComponent }" title="{ App.i18n.get('Clone Component') }"><i class="uk-icon-clone"></i></a>
-                    <a class="uk-margin-small-left" onclick="{ parent.addComponent }" title="{ App.i18n.get('Add Component') }"><i class="uk-icon-plus"></i></a>
-                    <a class="uk-margin-small-left uk-text-danger" onclick="{ parent.remove }"><i class="uk-icon-trash-o"></i></a>
+                    <a class="uk-margin-small-right" onclick="{ toggleDisabled }" title="{ App.i18n.get(item.settings.disabled ? 'Enable component' : 'Disable component') }"><i class="uk-icon-eye{item.settings.disabled ? '' : '-slash'}"></i></a>
+                    <a class="uk-margin-small-right" onclick="{ parent.cloneComponent }" title="{ App.i18n.get('Clone Component') }"><i class="uk-icon-clone"></i></a>
+                    <a class="uk-margin-small-right" onclick="{ parent.addComponent }" title="{ App.i18n.get('Add Component') }"><i class="uk-icon-plus"></i></a>
+                    <a class="uk-text-danger" onclick="{ parent.remove }"><i class="uk-icon-trash-o"></i></a>
                 </div>
             </div>
 
@@ -179,7 +187,8 @@
         this.generalSettingsFields  = [
             {name: "id", type: "text", group: "General" },
             {name: "class", type: "text", group: "General" },
-            {name: "style", type: "code", group: "General", options: {syntax: "css", height: "100px"}}
+            {name: "style", type: "code", group: "General", options: {syntax: "css", height: "100px"}},
+            {name: "disabled", type: "boolean", group: "General", options: {default: false}}
         ];
         this.addComponentLabel = App.i18n.get('Add component');
         if (opts.parentComponent) {
@@ -405,6 +414,11 @@
             if (Array.isArray(opts.restrict) && opts.restrict.indexOf(name) === -1) return false;
 
             return !this.componentGroup || (this.componentGroup === this.components[name].group);
+        }
+
+        toggleDisabled(e) {
+            var item = e.item.item;
+            item.settings.disabled = !item.settings.disabled;
         }
 
         addComponent(e, push) {

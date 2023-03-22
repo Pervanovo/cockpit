@@ -764,6 +764,45 @@ if (COCKPIT_API_REQUEST) {
             }
         }
     });
+
+    function filterDisabledItems($items): array
+    {
+        $isAssoc = count(array_filter(array_keys($items), 'is_string')) > 0;
+        $filtered = array_map(function ($item) {
+            if (!is_array($item)) {
+                return $item;
+            } else if ($item['settings']['disabled']) {
+                return null;
+            }
+            unset($item['settings']['disabled']);
+            return filterDisabledItems($item);
+        }, $items);
+        return $isAssoc
+            ? $filtered
+            : array_values(array_filter($filtered));
+    }
+
+    // remove disabled layout component items and the 'disabled' setting
+    $app->on("collections.find.after", function ($collectionName, &$entries, $isUpdate) use ($app) {
+        $languages = $app->retrieve('config/languages', []);
+        unset($languages['default']);
+        $languages = join("|", array_keys($languages));
+        $collection = $app->module('collections')->collection($collectionName);
+        foreach ($collection['fields'] as $field) {
+            if ($field['type'] === 'layout') {
+                $pattern = $field['localize']
+                    ? $field['name'] . '(_(' . $languages . '))?'
+                    : $field['name'];
+                foreach ($entries as &$entry) {
+                    foreach ($entry as $entryField => $value) {
+                        if (preg_match("/^$pattern$/", $entryField) && is_array($value)) {
+                            $entry[$entryField] = filterDisabledItems($value);
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
 
