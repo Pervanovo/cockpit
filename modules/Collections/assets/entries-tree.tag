@@ -200,8 +200,8 @@
 
         this.entry = opts.entry;
         this.collection = opts.collection || {};
-        this.fields = this._fields.slice(0, 2);
-        this.extrafields = this._fields.length > 2 ? this._fields.slice(2) : [];
+        this.fields = this._fields; //.slice(0, 10);
+        this.extrafields = []; //this._fields.length > 10 ? this._fields.slice(2) : [];
         this.imagefield = opts.imagefield;
 
         this.on('mount', function() {
