@@ -124,6 +124,18 @@
             padding: 10px;
         }
 
+        .entry-item-fields {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+            margin-left: 5px;
+        }
+
+        .entry-item-field {
+            display: table-cell;
+            padding-left: 5px;
+        }
+
         .extrafields-indicator {
             display: inline-block;
             padding: 2px 4px;
@@ -147,15 +159,15 @@
 
         <div class="uk-flex-item-1 uk-flex uk-flex-middle">
 
-            <input data-check="{entry._id}" type="checkbox" class="uk-margin-small-right uk-checkbox">
-
-            <div class="uk-text-truncate uk-margin-small-left" each="{field,idy in fields}" if="{ entry[field.name] !== null && entry[field.name] !== undefined && field.name != '_modified' && field.name != '_created' }">
-                <a class="uk-link-muted" href="{ App.route('/collections/entry/'+parent.collection.name+'/'+parent.entry._id) }">
-                    <raw content="{ App.Utils.renderValue(field.type, parent.entry[field.name], field) }" if="{parent.entry[field.name] !== undefined}"></raw>
-                    <span class="uk-icon-eye-slash uk-text-muted" if="{parent.entry[field.name] === undefined}"></span>
-                </a>
+            <input data-check="{entry._id}" type="checkbox" class="uk-checkbox">
+            <div class="entry-item-fields">
+                <div title="{field.name}" class="entry-item-field uk-text-truncate" each="{field,idy in fields}">
+                    <a class="uk-link-muted"  href="{ App.route('/collections/entry/'+parent.collection.name+'/'+parent.entry._id) }">
+                        <raw if="{[undefined, null].indexOf(parent.entry[field.name]) < 0}" content="{ App.Utils.renderValue(field.type, parent.entry[field.name], field) }"></raw>
+                        <span if="{[undefined, null].indexOf(parent.entry[field.name]) >= 0}" class="uk-icon-eye-slash uk-text-muted"></span>
+                    </a>
+                </div>
             </div>
-
             <div class="uk-margin-small-left" data-uk-dropdown="mode:'click'" if="{ extrafields.length }">
 
                 <a class="extrafields-indicator uk-text-muted" title="{App.i18n.get('More fields')}" data-uk-tooltip="pos:'right'"><i class="uk-icon-ellipsis-h"></i></a>
