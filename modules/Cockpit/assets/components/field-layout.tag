@@ -486,8 +486,17 @@
         remove(e) {
             this.items.splice(e.item.idx, 1);
 
+            function checkParent(child) {
+                if (!child.parent) {
+                    child.update();
+                } else {
+                    checkParent(child.parent);
+                }
+            }
+
             if (opts.child) {
                 this.parent.update()
+                checkParent(this);
             }
         }
 
