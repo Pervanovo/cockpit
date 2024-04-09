@@ -425,30 +425,6 @@ class Admin extends \Cockpit\AuthController {
         return json_encode($entries, JSON_PRETTY_PRINT);
     }
 
-
-    public function tree() {
-
-        \session_write_close();
-
-        $collection = $this->app->param('collection');
-
-        if (!$collection) return false;
-
-        $items = $this->app->module('collections')->find($collection);
-
-        if (count($items)) {
-
-            $items = $this->helper('utils')->buildTree($items, [
-                'parent_id_column_name' => '_pid',
-                'children_key_name' => 'children',
-                'id_column_name' => '_id',
-    			'sort_column_name' => '_o'
-            ]);
-        }
-
-        return $items;
-    }
-
     public function find() {
 
         \session_write_close();
@@ -488,6 +464,15 @@ class Admin extends \Cockpit\AuthController {
 
         if ($pages > 1 && isset($options['skip'])) {
             $page = ceil($options['skip'] / $options['limit']) + 1;
+        }
+
+        if (isset($options['tree']) && $options['tree'] && count($entries)) {
+            $entries = $this->helper('utils')->buildTree($entries, [
+                'parent_id_column_name' => '_pid',
+                'children_key_name' => 'children',
+                'id_column_name' => '_id',
+                'sort_column_name' => '_o'
+            ]);
         }
 
         return compact('entries', 'count', 'pages', 'page');
