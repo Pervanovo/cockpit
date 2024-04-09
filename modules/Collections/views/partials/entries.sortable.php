@@ -191,13 +191,13 @@
                         this.refs.txtfilter.value = q.filter;
                         this.load(true);
                     } else {
-                        this.loadTree();
+                        this.load();
                     }
                 } catch(e){
-                    this.loadTree();
+                    this.load();
                 }
             } else {
-                this.loadTree();
+                this.load();
             }
 
             this.update();
@@ -273,64 +273,43 @@
 
         this.load = function(initial) {
 
-            var options = {};
-
-            if (this.lang) {
-                options.lang = this.lang;
-            }
-
-            if (this.filter) {
-                options.filter = this.filter;
-            }
+            var options = {
+                tree: !this.filter,
+                page: 1,
+                limit: null,
+                lang: this.lang ?? undefined,
+                filter: this.filter ?? undefined
+            };
 
             this.loading = true;
             this.entries = [];
             this.selected = [];
 
             if (!initial) {
-
                 window.history.pushState(
                     null, null,
-                    App.route(['/collections/entries/', this.collection.name, '?q=', JSON.stringify({
-                        filter: this.filter || null
-                    })].join(''))
+                    App.route([
+                        '/collections/entries/',
+                        this.collection.name,
+                        this.filter
+                            ? '?q=' + JSON.stringify({filter: this.filter})
+                            : ''
+                    ].join(''))
                 );
             }
 
             App.request('/collections/find', {collection:this.collection.name, options:options}).then(function(data){
-
-                window.scrollTo(0, 0);
-
                 this.entries = data.entries;
-
                 this.ready   = true;
                 this.loading = false;
                 this.update();
-
-            }.bind(this))
-        }
-
-        this.loadTree = function() {
-
-            this.loading = true;
-            this.entries = [];
-            this.selected = [];
-
-            App.request('/collections/tree', {collection:this.collection.name}).then(function(tree){
-
-                this.entries = tree;
-
-                this.ready   = true;
-                this.loading = false;
-                this.update();
-
             }.bind(this))
         }
 
         this.updatefilter = function() {
 
             this.filter = this.refs.txtfilter.value || null;
-            this[this.filter ? 'load':'loadTree']();
+            this.load();
         }
 
         this.checkselected = function(update) {
@@ -360,7 +339,7 @@
             var lang = e.target.value;
             App.session.set('collections.entry.'+this.collection._id+'.lang', lang);
             this.lang = lang;
-            this.load(false);
+            this.load();
             this.update();
         }
 
