@@ -10,7 +10,7 @@
 
 </style>
 
-<script type="riot/tag" src="@base('collections:assets/entries-tree.tag')"></script>
+<script type="riot/tag" src="@base('collections:assets/entries-tree.tag')?nc={{ $app['debug'] ? time() : $app['cockpit/version'] }}"></script>
 
 <div class="uk-margin-top" riot-view>
 
