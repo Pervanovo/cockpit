@@ -1,33 +1,42 @@
 <?php
-/**
- * This file is part of the Cockpit project.
- *
- * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
 
 namespace MongoHybrid;
 
+use MongoDB\Client as MongoDBClient;
+use MongoDB\BSON\ObjectID;
+
 class Mongo {
 
-    protected $client;
-    protected $db;
-    protected $options;
+    protected MongoDBClient $client;
+    protected \MongoDB\Database $db;
+    protected array $options;
 
-    public function __construct($server, $options=[], $driverOptions=[]) {
+    public function __construct(string $server, array $options=[], array $driverOptions=[]) {
 
         $driverOptions = array_merge([
             'typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array']
         ], $driverOptions);
 
-        $this->client  = new \MongoDB\Client($server, $options, $driverOptions);
+        $this->client  = new MongoDBClient($server, $options, $driverOptions);
         $this->db      = $this->client->selectDatabase($options['db']);
         $this->options = $options;
     }
 
-    public function getCollection($name, $db = null){
+    public function lstCollections(): array {
+
+        $return = [];
+
+        $collections = $this->db->listCollectionNames();
+
+        foreach ($collections as $collection) {
+
+            $return[] = str_replace('_', '/', $collection);
+        }
+
+        return $return;
+    }
+
+    public function getCollection(string $name, ?string $db = null): \MongoDB\Collection {
 
         if ($db) {
             $name = "{$db}/{$name}";
@@ -38,7 +47,7 @@ class Mongo {
         return $this->db->selectCollection($name);
     }
 
-    public function dropCollection($name, $db = null){
+    public function dropCollection(string $name, ?string $db = null): array|object {
 
         if ($db) {
             $name = "{$db}/{$name}";
@@ -49,7 +58,7 @@ class Mongo {
         return $this->db->dropCollection($name);
     }
 
-    public function renameCollection($name, $newname, $db = null) {
+    public function renameCollection(string $name, string $newname, ?string $db = null): bool {
 
         if ($db) {
             $name = "{$db}/{$name}";
@@ -75,9 +84,9 @@ class Mongo {
         return true;
     }
 
-    public function findOneById($collection, $id){
+    public function findOneById(string $collection, mixed $id): ?array {
 
-        if (is_string($id)) $id = new \MongoDB\BSON\ObjectID($id);
+        if (is_string($id)) $id = new ObjectID($id);
 
         $doc =  $this->getCollection($collection)->findOne(['_id' => $id]);
 
@@ -86,19 +95,19 @@ class Mongo {
         return $doc;
     }
 
-    public function findOne($collection, $filter = [], $projection = []) {
+    public function findOne(string $collection, ?array $filter = null, ?array $projection = null): ?array {
 
         if (!$filter) $filter = [];
 
-        $filter = $this->_fixMongoIds($filter, true);
-        $doc    = $this->getCollection($collection)->findOne($filter, ['projection' => $projection]);
+        $filter = $this->_fixForMongo($filter, true);
+        $doc    = $this->getCollection($collection)->findOne($filter, ['projection' => $projection ?? []]);
 
         if (isset($doc['_id'])) $doc['_id'] = (string) $doc['_id'];
 
         return $doc;
     }
 
-    public function find($collection, $options = []){
+    public function find(string $collection, array $options = []): ResultSet {
 
         $filter = isset($options['filter']) && $options['filter'] ? $options['filter'] : [];
         $fields = isset($options['fields']) && $options['fields'] ? $options['fields'] : [];
@@ -106,7 +115,7 @@ class Mongo {
         $sort   = isset($options['sort'])   && $options['sort']   ? $options['sort']   : null;
         $skip   = isset($options['skip'])   && $options['skip']   ? $options['skip']   : null;
 
-        $filter = $this->_fixMongoIds($filter, true);
+        $filter = $this->_fixForMongo($filter, true);
 
         $cursor = $this->getCollection($collection)->find($filter, [
             'projection' => $fields,
@@ -132,7 +141,34 @@ class Mongo {
         return $resultSet;
     }
 
-    public function insert($collection, &$doc) {
+    public function aggregate(string $collection, array $pipeline) {
+
+        $cursor = $this->getCollection($collection)->aggregate($pipeline);
+        $docs = $cursor->toArray();
+        $resultSet = new ResultSet($this, $docs);
+
+        return $resultSet;
+    }
+
+    public function getFindTermFilter($term) {
+
+        $terms = str_getcsv(trim($term), ' ');
+
+        $filter = ['$where' => "function() { return JSON.stringify(this).indexOf('{$term}') > -1; }"];
+
+        if (count($terms) > 1) {
+
+            $filter = ['$or' => []];
+
+            foreach ($terms as $term) {
+                $filter['$or'][] = ['$where' => "function() { return JSON.stringify(this).indexOf('{$term}') > -1; }"];
+            }
+        }
+
+        return $filter;
+    }
+
+    public function insert(string $collection, array &$doc): mixed {
 
         if (isset($doc[0])) {
 
@@ -143,7 +179,7 @@ class Mongo {
             return $doc;
         }
 
-        $doc = $this->_fixMongoIds($doc);
+        $doc = $this->_fixForMongo($doc);
         $ref = $doc;
 
         $return = $this->getCollection($collection)->insertOne($ref);
@@ -157,9 +193,9 @@ class Mongo {
         return $return;
     }
 
-    public function save($collection, &$data, $create = false) {
+    public function save(string $collection, array &$data, bool $create = false): mixed {
 
-        $data = $this->_fixMongoIds($data);
+        $data = $this->_fixForMongo($data);
         $ref  = $data;
 
         if (isset($data['_id'])) {
@@ -182,49 +218,53 @@ class Mongo {
         return $return;
     }
 
-    public function update($collection, $criteria, $data) {
+    public function update(string $collection, mixed $criteria, array $data) {
 
-        $criteria = $this->_fixMongoIds($criteria);
-        $data     = $this->_fixMongoIds($data);
+        $criteria = $this->_fixForMongo($criteria);
+        $data     = $this->_fixForMongo($data);
 
         return $this->getCollection($collection)->updateMany($criteria, ['$set' => $data]);
     }
 
-    public function remove($collection, $filter=[]) {
+    public function remove(string $collection, array $filter = []) {
 
         if (!$filter) $filter = [];
 
-        $filter = $this->_fixMongoIds($filter);
+        $filter = $this->_fixForMongo($filter);
 
         return $this->getCollection($collection)->deleteMany($filter);
     }
 
-    public function removeField($collection, $field, $filter = []) {
+    public function removeField(string $collection, string $field, array $filter = []) {
 
         $opts = ['$unset' => []];
         $opts['$unset'][$field] = 1;
 
+        $filter = $this->_fixForMongo($filter);
+
         return $this->getCollection($collection)->updateMany($filter, $opts);
     }
 
-    public function renameField($collection, $field, $newfield, $filter = []) {
+    public function renameField(string $collection, string $field, string $newfield, array $filter = []) {
 
         $opts = ['$rename' => []];
         $opts['$rename'][$field] = $newfield;
 
+        $filter = $this->_fixForMongo($filter);
+
         return $this->getCollection($collection)->updateMany($filter, $opts);
     }
 
-    public function count($collection, $filter=[], $options=[]) {
+    public function count(string $collection, ?array $filter = null, array $options = []) {
 
         if (!$filter) $filter = [];
 
-        $filter = $this->_fixMongoIds($filter, true);
+        $filter = $this->_fixForMongo($filter, true);
 
         return $this->getCollection($collection)->countDocuments($filter, $options);
     }
 
-    protected function _fixMongoIds(&$data, $infinite = false, $_level = 0) {
+    protected function _fixForMongo(mixed &$data, bool $infinite = false, int $_level = 0): mixed {
 
         if (!is_array($data)) {
             return $data;
@@ -232,7 +272,7 @@ class Mongo {
 
         if ($_level == 0 && isset($data[0])) {
             foreach ($data as $i => $doc) {
-                $data[$i] = $this->_fixMongoIds($doc, $infinite);
+                $data[$i] = $this->_fixForMongo($doc, $infinite);
             }
             return $data;
         }
@@ -240,44 +280,58 @@ class Mongo {
         foreach ($data as $k => &$v) {
 
             if (is_array($data[$k]) && $infinite) {
-                $data[$k] = $this->_fixMongoIds($data[$k], $infinite, $_level + 1);
+                $data[$k] = $this->_fixForMongo($data[$k], $infinite, $_level + 1);
             }
 
             if ($k === '_id') {
 
                 if (is_string($v)) {
-                    
-                    $v = $v[0] === '@' ? \substr($v, 1) : new \MongoDB\BSON\ObjectID($v);
-
+                    $v = $v[0] === '@' ? \substr($v, 1) : $this->getObjectID($v);
                 } elseif (is_array($v)) {
 
                     if (isset($v['$in'])) {
 
                         foreach ($v['$in'] as &$id) {
-                            if (is_string($id)) {
-                                $id = new \MongoDB\BSON\ObjectID($id);
-                            }
+                            $id = $this->getObjectID($id);
                         }
                     }
-    
+
                     if (isset($v['$nin'])) {
-    
+
                         foreach ($v['$nin'] as &$id) {
-                            if (is_string($id)) {
-                                $id = new \MongoDB\BSON\ObjectID($id);
-                            }
+                            $id = $this->getObjectID($id);
                         }
                     }
 
                     if (isset($v['$ne']) && is_string($v['$ne'])) {
-    
-                        $v['$ne'] = new \MongoDB\BSON\ObjectID($v['$ne']);                    
+                        $v['$ne'] = $this->getObjectID($v['$ne']);
                     }
 
                 }
             }
+
+            // eg ArrayObject
+            if (\is_object($v) && \is_iterable($v)) {
+                $v = \json_decode(\json_encode($v), true);
+            }
+
+            if (is_string($v) && str_starts_with($v, '$DATE(')) {
+                $format = trim(substr($v, 6, -1));
+                $v = date($format ? $format : 'Y-m-d');
+            }
         }
 
         return $data;
+    }
+
+    protected function getObjectID($v) {
+
+        if (is_string($v)) {
+            try {
+                $v = new ObjectID($v);
+            } catch (\Throwable $e) {}
+        }
+
+        return $v;
     }
 }

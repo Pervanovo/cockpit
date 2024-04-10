@@ -172,7 +172,7 @@ class App implements \ArrayAccess {
         $this->exit = true;
 
         if (!isset($this->response)) {
-            
+
             if (\is_array($data) || \is_object($data)) {
                 $data = \json_encode($data);
             }
@@ -180,7 +180,7 @@ class App implements \ArrayAccess {
             if ($data) {
                 echo $data;
             }
-            
+
             exit;
         }
 
@@ -420,7 +420,7 @@ class App implements \ArrayAccess {
             $url = \implode('/', \array_map('rawurlencode', explode('/', $url)));
 
             if ($full) {
-                $site_url = str_replace(parse_url($this->registry['site_url'], \PHP_URL_PATH), '', $this->registry['site_url']);
+                $site_url = str_replace(parse_url($this->registry['site_url'] ?? '', \PHP_URL_PATH) ?? '', '', $this->registry['site_url'] ?? '');
                 $url = \rtrim($site_url, '/').$url;
             }
         }
@@ -1151,11 +1151,11 @@ class App implements \ArrayAccess {
 
     // Array Access implementation
 
-    public function offsetSet($key, $value) {
+    public function offsetSet($key, $value): void {
         $this->registry[$key] = $value;
     }
 
-    public function offsetGet($key) {
+    public function offsetGet($key): mixed {
 
         $value = $this->retrieve($key, null);
 
@@ -1166,11 +1166,11 @@ class App implements \ArrayAccess {
         return $value;
     }
 
-    public function offsetExists($key) {
+    public function offsetExists($key): bool {
         return isset($this->registry[$key]);
     }
 
-    public function offsetUnset($key) {
+    public function offsetUnset($key): void {
         unset($this->registry[$key]);
     }
 

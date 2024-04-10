@@ -1,30 +1,21 @@
 <?php
-/**
- * This file is part of the Cockpit project.
- *
- * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
 
 namespace MongoHybrid;
-
 
 class ResultSet extends \ArrayObject {
 
     /** Driver */
-    protected $driver;
+    protected Mongo|MongoLite $driver;
 
     /** @var array - Collection docs cache */
-    protected $cache = [];
+    protected array $cache = [];
 
     /**
      * Constructor
      * @param $driver
      * @param iterable $documents
      */
-    public function __construct($driver, &$documents) {
+    public function __construct(Mongo|MongoLite $driver, array &$documents) {
 
         $this->driver = $driver;
         $this->cache  = [];
@@ -32,7 +23,7 @@ class ResultSet extends \ArrayObject {
         parent::__construct($documents);
     }
 
-    public function hasOne($collections) {
+    public function hasOne(array $collections): void {
 
         foreach ($this as &$doc) {
 
@@ -51,7 +42,7 @@ class ResultSet extends \ArrayObject {
 
     }
 
-    public function hasMany($collections) {
+    public function hasMany(array $collections): void {
 
         foreach ($this as &$doc) {
 
@@ -65,11 +56,11 @@ class ResultSet extends \ArrayObject {
         }
     }
 
-    public function toArray() {
+    public function toArray(): array {
         return $this->getArrayCopy();
     }
 
-    public function __toString() {
+    public function __toString(): string {
         return json_encode($this->getArrayCopy());
     }
 }
