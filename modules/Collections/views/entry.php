@@ -125,7 +125,11 @@
 
                 <cp-actionbar>
                     <div class="uk-container uk-container-center">
-                        <button class="uk-button uk-button-large uk-button-primary">@lang('Save')</button>
+                        <button show="{ !saving }" class="uk-button uk-button-large uk-button-primary">@lang('Save')</button>
+                        <button show="{ saving }" disabled class="uk-button uk-button-large uk-button-primary">
+                            @lang('Saving')
+                            <i class="uk-icon-spinner uk-icon-spin"></i>
+                        </button>
                         <a class="uk-button uk-button-link" href="@route('/collections/entries/'.$collection['name'])">
                             <span show="{ !entry._id }">@lang('Cancel')</span>
                             <span show="{ entry._id }">@lang('Close')</span>
@@ -211,6 +215,8 @@
         this.languages    = App.$data.languages;
         this.groups       = {Main:[]};
         this.group        = '';
+
+        this.saving = false;
 
         if (this.languages.length) {
             this.lang = App.Utils.params('lang') || App.session.get('collections.entry.'+this.collection._id+'.lang', '');
@@ -303,6 +309,7 @@
         }
 
         submit(e) {
+            $this.saving = true;
 
             if (e) {
                 e.preventDefault();
@@ -327,6 +334,7 @@
                     App.i18n.get('Fill in these required fields before saving:'),
                     '<div class="uk-margin-small-top">'+required.join(',')+'</div>'
                 ].join(''), 'danger');
+                $this.saving = false;
                 return;
             }
 
@@ -349,13 +357,15 @@
                         $this.tags['cp-revisions-info'].sync();
                     }
 
+                    $this.saving = false;
                     $this.update();
-
                 } else {
                     App.ui.notify("Saving failed.", "danger");
+                    $this.saving = false;
                 }
             }, function(res) {
                 App.ui.notify(res && (res.message || res.error) ? (res.message || res.error) : 'Saving failed.', 'danger');
+                $this.saving = false;
             });
 
             return false;
