@@ -336,7 +336,7 @@
 
                     App.ui.notify("Saving successful", "success");
 
-                    _.extend(entry, $this.entry);
+                    _.merge($this.entry, entry);
 
                     $this.fields.forEach(function(field){
 
