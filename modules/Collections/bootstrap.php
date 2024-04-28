@@ -334,7 +334,7 @@ $this->module('collections')->extend([
 
                         case 'string':
                         case 'text':
-                            $value = strlen($value) ? (string)$value : null;
+                            $value = is_scalar($value) ? (string)$value : null;
                             break;
 
                         case 'boolean':
