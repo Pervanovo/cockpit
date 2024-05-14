@@ -3541,7 +3541,7 @@ riot.tag2('field-location', '<div class="uk-alert" if="{!apiready}"> Loading map
 riot.tag2('field-markdown', '<field-html ref="input" markdown="true" bind="{opts.bind}" height="{opts.height}"></field-html>', '', '', function(opts) {
 });
 
-riot.tag2('field-multipleselect', '<div if="{loading}"><i class="uk-icon-spinner uk-icon-spin"></i></div> <div class="{optionsLength > 10 ? \'uk-scrollable-box\':\'\'}" if="{!loading && Array.isArray(options)}"> <div class="uk-margin" each="{group in Object.keys(groups).sort()}"> <div class="uk-text-bold uk-text-upper uk-text-small uk-margin-small">{group}</div> <div class="uk-margin-small uk-margin-small-left uk-text-small" each="{option,idx in parent.groups[group]}"> <a data-value="{option.value}" class="{parent.selected.indexOf(option.value)!==-1 ? \'uk-text-primary\':\'uk-text-muted\'}" onclick="{toggle}" title="{option.label}"> <i class="uk-icon-{parent.selected.indexOf(option.value)!==-1 ? \'circle\':\'circle-o\'} uk-margin-small-right"></i> {option.label} </a> </div> </div> <div class="uk-margin-small-top uk-text-small" each="{option in options}"> <a data-value="{option.value}" class="{parent.selected.indexOf(option.value)!==-1 ? \'uk-text-primary\':\'uk-text-muted\'}" onclick="{parent.toggle}" title="{option.label}"> <i class="uk-icon-{parent.selected.indexOf(option.value)!==-1 ? \'circle\':\'circle-o\'} uk-margin-small-right"></i> {option.label} </a> </div> </div> <span class="uk-text-small uk-text-muted" if="{optionsLength > 10}">{selected.length} {App.i18n.get(\'selected\')}</span>', '', '', function(opts) {
+riot.tag2('field-multipleselect', '<div if="{loading}"><i class="uk-icon-spinner uk-icon-spin"></i></div> <div class="{optionsLength > 10 ? \'uk-scrollable-box\':\'\'}" if="{!loading && Array.isArray(options)}"> <div class="uk-margin" each="{group in Object.keys(groups).sort()}"> <div class="uk-text-bold uk-text-upper uk-text-small uk-margin-small">{group}</div> <div class="uk-margin-small uk-margin-small-left uk-text-small" each="{option,idx in parent.groups[group]}"> <a data-value="{option.value}" class="{parent.selected.indexOf(option.value)!==-1 ? \'uk-text-primary\':\'uk-text-muted\'}" onclick="{toggle}" title="{option.label}"> <i class="uk-icon-{parent.selected.indexOf(option.value)!==-1 ? \'circle\':\'circle-o\'} uk-margin-small-right"></i> {option.label} </a> </div> </div> <div class="uk-margin-small-top uk-text-small" each="{option in options}"> <a data-value="{option.value}" class="{parent.selected.indexOf(option.value)!==-1 ? \'uk-text-primary\':\'uk-text-muted\'}" onclick="{parent.toggle}" title="{option.label}"> <span each="{indent in new Array(option.level ?? 0)}">{opts.indentation || ⁗&mdash;⁗}</span> <i class="uk-icon-{parent.selected.indexOf(option.value)!==-1 ? \'circle\':\'circle-o\'} uk-margin-small-right"></i> {option.label} </a> </div> </div> <span class="uk-text-small uk-text-muted" if="{optionsLength > 10}">{selected.length} {App.i18n.get(\'selected\')}</span>', '', '', function(opts) {
 
         var $this = this;
 
@@ -3567,12 +3567,24 @@ riot.tag2('field-multipleselect', '<div if="{loading}"><i class="uk-icon-spinner
                     url = '/collections/find?'+url;
                 }
 
+                if (opts.src.nested) {
+                    url += "&options[tree]=true";
+                }
+
+                if (opts.src.localized) {
+                    url += "&options[lang]=" + (App.session.get('collections.entry.' + __collection._id + '.lang') || "");
+                }
+
                 App.request(opts.src.url).then(function(data) {
 
                     $this.loading = false;
 
                     if (url.match('^\/collections\/find\?')) {
                         data = data.entries;
+                    }
+
+                    if (opts.src.nested && Array.isArray(data)) {
+                        data = $this.flatten(data);
                     }
 
                     if (!Array.isArray(data)) {
@@ -3589,8 +3601,13 @@ riot.tag2('field-multipleselect', '<div if="{loading}"><i class="uk-icon-spinner
                         option = {
                             value: _.get(item, fieldVal),
                             label: _.get(item, fieldLabel),
-                            group: fieldGroup ? _.get(item, fieldGroup) : false
+                            group: fieldGroup ? _.get(item, fieldGroup) : false,
+                            level: 0
                         };
+
+                        if (opts.src.nested) {
+                            option.level = _.get(item, "_level");
+                        }
 
                         if (option.group) {
 
@@ -3691,6 +3708,19 @@ riot.tag2('field-multipleselect', '<div if="{loading}"><i class="uk-icon-spinner
             }
 
             this.$setValue(this.selected);
+        }.bind(this)
+
+        this.flatten = function(entries, i) {
+            i = i ?? 0;
+            var output = [];
+            for (entry of entries) {
+                entry._level = i;
+                output.push(entry);
+                if (Array.isArray(entry.children)) {
+                    output = output.concat($this.flatten(entry.children, i+1));
+                }
+            }
+            return output;
         }.bind(this)
 
 });

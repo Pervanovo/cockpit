@@ -16,6 +16,7 @@
 
         <div class="uk-margin-small-top uk-text-small" each="{option in options}">
             <a data-value="{ option.value }" class="{ parent.selected.indexOf(option.value)!==-1 ? 'uk-text-primary':'uk-text-muted' }" onclick="{ parent.toggle }" title="{ option.label }">
+                <span each="{indent in new Array(option.level ?? 0)}">{opts.indentation || "&mdash;"}</span>
                 <i class="uk-icon-{ parent.selected.indexOf(option.value)!==-1 ? 'circle':'circle-o' } uk-margin-small-right"></i>
                 { option.label }
             </a>
@@ -49,12 +50,25 @@
                     url = '/collections/find?'+url;
                 }
 
+                if (opts.src.nested) {
+                    url += "&options[tree]=true";
+                }
+
+                if (opts.src.localized) {
+                    url += "&options[lang]=" + (App.session.get('collections.entry.' + __collection._id + '.lang') || "");
+                }
+
+
                 App.request(opts.src.url).then(function(data) {
 
                     $this.loading = false;
 
                     if (url.match('^\/collections\/find\?')) {
                         data = data.entries;
+                    }
+
+                    if (opts.src.nested && Array.isArray(data)) {
+                        data = $this.flatten(data);
                     }
 
                     if (!Array.isArray(data)) {
@@ -71,8 +85,13 @@
                         option = {
                             value: _.get(item, fieldVal),
                             label: _.get(item, fieldLabel),
-                            group: fieldGroup ? _.get(item, fieldGroup) : false
+                            group: fieldGroup ? _.get(item, fieldGroup) : false,
+                            level: 0
                         };
+
+                        if (opts.src.nested) {
+                            option.level = _.get(item, "_level");
+                        }
 
                         if (option.group) {
                             
@@ -173,6 +192,19 @@
             }
 
             this.$setValue(this.selected);
+        }
+
+        flatten(entries, i) {
+            i = i ?? 0;
+            var output = [];
+            for (entry of entries) {
+                entry._level = i;
+                output.push(entry);
+                if (Array.isArray(entry.children)) {
+                    output = output.concat($this.flatten(entry.children, i+1));
+                }
+            }
+            return output;
         }
 
     </script>
