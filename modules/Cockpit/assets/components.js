@@ -3575,7 +3575,7 @@ riot.tag2('field-multipleselect', '<div if="{loading}"><i class="uk-icon-spinner
                     url += "&options[lang]=" + (App.session.get('collections.entry.' + __collection._id + '.lang') || "");
                 }
 
-                App.request(opts.src.url).then(function(data) {
+                App.request(url).then(function(data) {
 
                     $this.loading = false;
 

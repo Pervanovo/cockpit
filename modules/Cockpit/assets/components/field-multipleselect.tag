@@ -59,7 +59,7 @@
                 }
 
 
-                App.request(opts.src.url).then(function(data) {
+                App.request(url).then(function(data) {
 
                     $this.loading = false;
 
