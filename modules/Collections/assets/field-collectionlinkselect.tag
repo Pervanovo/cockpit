@@ -109,6 +109,10 @@
             });
         })
 
+        this.$updateValue = function (value) {
+            this.update();
+        };
+
         selectSingleItem(e) {
             if (!e.target.value) {
                 this.$setValue(null);
