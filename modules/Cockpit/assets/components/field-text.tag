@@ -16,7 +16,7 @@
     </style>
 
     <div class="uk-position-relative field-text-container">
-        <input ref="input" class="uk-width-1-1" bind="{opts.bind}" type="{ opts.type || 'text' }" oninput="{updateLengthIndicator}" placeholder="{ opts.placeholder }">
+        <input ref="input" class="uk-width-1-1" bind="{opts.bind}" type="{ opts.type || 'text' }" placeholder="{ opts.placeholder }">
         <span class="uk-text-muted" ref="lengthIndicator" show="{type=='text'}" hide="{opts.showCount === false}"></span>
     </div>
 
@@ -54,26 +54,21 @@
         });
 
         this.$updateValue = function(value) {
-
             if (opts.slug) {
                 this.slug = App.Utils.sluggify(value || '');
                 this.$setValue(this.slug, false, opts.bind+'_slug');
                 this.update();
             }
-
             this.updateLengthIndicator();
-
         }.bind(this);
 
-        this.updateLengthIndicator = function() {
-
-            if (this.type != 'text' || opts.showCount === false) {
+        updateLengthIndicator() {
+            if (this.type !== 'text' || opts.showCount === false) {
                 return;
             }
-
-            this.refs.lengthIndicator.innerText = Math.abs((opts.maxlength || 0) - this.refs.input.value.length);
+            var value = this.$getValue() || "";
+            this.refs.lengthIndicator.innerText = Math.abs((opts.maxlength || 0) - value.length);
         }
-
     </script>
 
 </field-text>

@@ -4380,7 +4380,7 @@ riot.tag2('field-tags', '<div if="{loading}"><i class="uk-icon-spinner uk-icon-s
 
 });
 
-riot.tag2('field-text', '<div class="uk-position-relative field-text-container"> <input ref="input" class="uk-width-1-1" bind="{opts.bind}" type="{opts.type || \'text\'}" oninput="{updateLengthIndicator}" placeholder="{opts.placeholder}"> <span class="uk-text-muted" ref="lengthIndicator" show="{type==\'text\'}" hide="{opts.showCount === false}"></span> </div> <div class="uk-text-muted uk-text-small uk-margin-small-top" if="{opts.slug}" title="Slug"> {slug} </div>', 'field-text [ref="input"][type=text],[data-is="field-text"] [ref="input"][type=text]{ padding-right: 30px !important; } field-text .field-text-container span,[data-is="field-text"] .field-text-container span{ position: absolute; top: 50%; right: 0; font-family: monospace; transform: translateY(-50%) scale(.9); }', '', function(opts) {
+riot.tag2('field-text', '<div class="uk-position-relative field-text-container"> <input ref="input" class="uk-width-1-1" bind="{opts.bind}" type="{opts.type || \'text\'}" placeholder="{opts.placeholder}"> <span class="uk-text-muted" ref="lengthIndicator" show="{type==\'text\'}" hide="{opts.showCount === false}"></span> </div> <div class="uk-text-muted uk-text-small uk-margin-small-top" if="{opts.slug}" title="Slug"> {slug} </div>', 'field-text [ref="input"][type=text],[data-is="field-text"] [ref="input"][type=text]{ padding-right: 30px !important; } field-text .field-text-container span,[data-is="field-text"] .field-text-container span{ position: absolute; top: 50%; right: 0; font-family: monospace; transform: translateY(-50%) scale(.9); }', '', function(opts) {
 
         var $this = this;
 
@@ -4410,26 +4410,21 @@ riot.tag2('field-text', '<div class="uk-position-relative field-text-container">
         });
 
         this.$updateValue = function(value) {
-
             if (opts.slug) {
                 this.slug = App.Utils.sluggify(value || '');
                 this.$setValue(this.slug, false, opts.bind+'_slug');
                 this.update();
             }
-
             this.updateLengthIndicator();
-
         }.bind(this);
 
         this.updateLengthIndicator = function() {
-
-            if (this.type != 'text' || opts.showCount === false) {
+            if (this.type !== 'text' || opts.showCount === false) {
                 return;
             }
-
-            this.refs.lengthIndicator.innerText = Math.abs((opts.maxlength || 0) - this.refs.input.value.length);
-        }
-
+            var value = this.$getValue() || "";
+            this.refs.lengthIndicator.innerText = Math.abs((opts.maxlength || 0) - value.length);
+        }.bind(this)
 });
 
 riot.tag2('field-textarea', '<textarea ref="input" class="uk-width-1-1 {opts.cls}" bind="{opts.bind}" bind-event="input" riot-rows="{opts.rows || 10}" riot-placeholder="{opts.placeholder || \'Text...\'}"></textarea> <div class="uk-text-right uk-text-small uk-text-muted" ref="lengthIndicator" hide="{opts.showCount === false}"></div>', 'field-textarea [ref="lengthIndicator"],[data-is="field-textarea"] [ref="lengthIndicator"]{ font-family: monospace; }', '', function(opts) {
