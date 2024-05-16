@@ -457,6 +457,7 @@
                 } else {
                     App.ui.confirm("<div>Are you sure you want to paste?</div><div class='uk-text-large'>The copied value comes from a different field type: " + clipboard.type + "</div>", function(){
                         $this.doPaste(fieldName, clipboard.value, value);
+                        $this.update();
                     });
                 }
             }
