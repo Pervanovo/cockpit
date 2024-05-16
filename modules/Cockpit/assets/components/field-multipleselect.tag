@@ -1,7 +1,11 @@
 <field-multipleselect>
     <div if="{loading}"><i class="uk-icon-spinner uk-icon-spin"></i></div>
-    <div class="{ optionsLength > 10 ? 'uk-scrollable-box':'' }" if="{!loading && Array.isArray(options)}">
-
+    <div class="{ optionsLength > manyOptions ? 'uk-scrollable-box' : '' } uk-position-relative" if="{!loading && Array.isArray(options)}" style="{ expanded ? 'height: auto;' : ''}">
+        <i if="{ optionsLength > manyOptions }"
+           class="uk-position-top-right uk-icon-{ expanded ? 'compress' : 'expand'}"
+           style="font-size: 1.2em; padding: 0.5em; cursor: pointer;"
+           onclick="{ toggleExpand }">
+        </i>
         <div class="uk-margin" each="{group in Object.keys(groups).sort()}">
 
             <div class="uk-text-bold uk-text-upper uk-text-small uk-margin-small">{group}</div>
@@ -22,7 +26,7 @@
             </a>
         </div>
     </div>
-    <span class="uk-text-small uk-text-muted" if="{ optionsLength > 10}">{selected.length} { App.i18n.get('selected') }</span>
+    <span class="uk-text-small uk-text-muted" if="{ optionsLength > manyOptions}">{selected.length} { App.i18n.get('selected') }</span>
 
     <script>
 
@@ -32,6 +36,8 @@
         this.optionsLength = 0;
         this.groups = {};
         this.options  = null;
+        this.manyOptions = 7;
+        this.expanded = false;
 
         this.loading = opts.src && opts.src.url ? true : false;
 
@@ -205,6 +211,10 @@
                 }
             }
             return output;
+        }
+
+        toggleExpand() {
+            $this.expanded = !$this.expanded;
         }
 
     </script>

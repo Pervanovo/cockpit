@@ -3541,7 +3541,7 @@ riot.tag2('field-location', '<div class="uk-alert" if="{!apiready}"> Loading map
 riot.tag2('field-markdown', '<field-html ref="input" markdown="true" bind="{opts.bind}" height="{opts.height}"></field-html>', '', '', function(opts) {
 });
 
-riot.tag2('field-multipleselect', '<div if="{loading}"><i class="uk-icon-spinner uk-icon-spin"></i></div> <div class="{optionsLength > 10 ? \'uk-scrollable-box\':\'\'}" if="{!loading && Array.isArray(options)}"> <div class="uk-margin" each="{group in Object.keys(groups).sort()}"> <div class="uk-text-bold uk-text-upper uk-text-small uk-margin-small">{group}</div> <div class="uk-margin-small uk-margin-small-left uk-text-small" each="{option,idx in parent.groups[group]}"> <a data-value="{option.value}" class="{parent.selected.indexOf(option.value)!==-1 ? \'uk-text-primary\':\'uk-text-muted\'}" onclick="{toggle}" title="{option.label}"> <i class="uk-icon-{parent.selected.indexOf(option.value)!==-1 ? \'circle\':\'circle-o\'} uk-margin-small-right"></i> {option.label} </a> </div> </div> <div class="uk-margin-small-top uk-text-small" each="{option in options}"> <a data-value="{option.value}" class="{parent.selected.indexOf(option.value)!==-1 ? \'uk-text-primary\':\'uk-text-muted\'}" onclick="{parent.toggle}" title="{option.label}"> <span each="{indent in new Array(option.level ?? 0)}">{opts.indentation || ⁗&mdash;⁗}</span> <i class="uk-icon-{parent.selected.indexOf(option.value)!==-1 ? \'circle\':\'circle-o\'} uk-margin-small-right"></i> {option.label} </a> </div> </div> <span class="uk-text-small uk-text-muted" if="{optionsLength > 10}">{selected.length} {App.i18n.get(\'selected\')}</span>', '', '', function(opts) {
+riot.tag2('field-multipleselect', '<div if="{loading}"><i class="uk-icon-spinner uk-icon-spin"></i></div> <div class="{optionsLength > manyOptions ? \'uk-scrollable-box\' : \'\'} uk-position-relative" if="{!loading && Array.isArray(options)}" riot-style="{expanded ? \'height: auto;\' : \'\'}"> <i if="{optionsLength > manyOptions}" class="uk-position-top-right uk-icon-{expanded ? \'compress\' : \'expand\'}" style="font-size: 1.2em; padding: 0.5em; cursor: pointer;" onclick="{toggleExpand}"> </i> <div class="uk-margin" each="{group in Object.keys(groups).sort()}"> <div class="uk-text-bold uk-text-upper uk-text-small uk-margin-small">{group}</div> <div class="uk-margin-small uk-margin-small-left uk-text-small" each="{option,idx in parent.groups[group]}"> <a data-value="{option.value}" class="{parent.selected.indexOf(option.value)!==-1 ? \'uk-text-primary\':\'uk-text-muted\'}" onclick="{toggle}" title="{option.label}"> <i class="uk-icon-{parent.selected.indexOf(option.value)!==-1 ? \'circle\':\'circle-o\'} uk-margin-small-right"></i> {option.label} </a> </div> </div> <div class="uk-margin-small-top uk-text-small" each="{option in options}"> <a data-value="{option.value}" class="{parent.selected.indexOf(option.value)!==-1 ? \'uk-text-primary\':\'uk-text-muted\'}" onclick="{parent.toggle}" title="{option.label}"> <span each="{indent in new Array(option.level ?? 0)}">{opts.indentation || ⁗&mdash;⁗}</span> <i class="uk-icon-{parent.selected.indexOf(option.value)!==-1 ? \'circle\':\'circle-o\'} uk-margin-small-right"></i> {option.label} </a> </div> </div> <span class="uk-text-small uk-text-muted" if="{optionsLength > manyOptions}">{selected.length} {App.i18n.get(\'selected\')}</span>', '', '', function(opts) {
 
         var $this = this;
 
@@ -3549,6 +3549,8 @@ riot.tag2('field-multipleselect', '<div if="{loading}"><i class="uk-icon-spinner
         this.optionsLength = 0;
         this.groups = {};
         this.options  = null;
+        this.manyOptions = 7;
+        this.expanded = false;
 
         this.loading = opts.src && opts.src.url ? true : false;
 
@@ -3721,6 +3723,10 @@ riot.tag2('field-multipleselect', '<div if="{loading}"><i class="uk-icon-spinner
                 }
             }
             return output;
+        }.bind(this)
+
+        this.toggleExpand = function() {
+            $this.expanded = !$this.expanded;
         }.bind(this)
 
 });
