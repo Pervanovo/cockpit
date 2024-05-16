@@ -9,6 +9,13 @@
     }
 
     @endif
+    .clipboard-toolbox {
+        display: none;
+    }
+
+    cp-fieldcontainer:hover .clipboard-toolbox {
+        display: block!important;
+    }
 </style>
 
 <script>
@@ -89,7 +96,7 @@
 
                     <div class="uk-width-medium-{field.width}" each="{field,idx in fields}" show="{checkVisibilityRule(field) && (!group || (group == field.group)) }" if="{ hasFieldAccess(field.name) }" no-reorder>
 
-                        <cp-fieldcontainer>
+                        <cp-fieldcontainer class="uk-position-relative">
 
                             <label title="{ field.name }">
 
@@ -107,6 +114,11 @@
                                     </div>
                                 </span>
 
+                                <div if="{ blacklistedCopyTypes.indexOf(field.type) === -1 }" class="uk-position-top-right clipboard-toolbox">
+                                    <a class="uk-icon-copy" title="@lang('Copy value')" data-uk-tooltip="pos:'bottom'" field="{field.name}" localize="{ field.localize }" type="{field.type}" onclick="{parent.copyCurrentValueToClipboard}"></a>
+                                    <a class="uk-icon-paste" title="@lang('Paste value')" data-uk-tooltip="pos:'bottom'" field="{field.name}" localize="{ field.localize }" type="{field.type}" onclick="{parent.pasteClipboardValue}"></a>
+                                    <a if="{ undoValues[field.localize && parent.lang ? (field.name+'_'+parent.lang):field.name] }" class="uk-icon-undo" title="@lang('Undo paste value')" data-uk-tooltip="pos:'bottom'" field="{field.name}" localize="{ field.localize }" onclick="{parent.undoPaste}"></a>
+                                </div>
                             </label>
 
                             <div class="uk-margin-top">
@@ -211,6 +223,9 @@
         this.languages    = App.$data.languages;
         this.groups       = {Main:[]};
         this.group        = '';
+
+        this.undoValues = {};
+        this.blacklistedCopyTypes = ["uniqueid", "specifications", "object", "wysiwyg", "code"];
 
         if (this.languages.length) {
             this.lang = App.Utils.params('lang') || App.session.get('collections.entry.'+this.collection._id+'.lang', '');
@@ -397,6 +412,65 @@
                 val = JSON.stringify(this.entry[field+(lang ? '_':'')+lang]);
 
             this.entry[field+(this.lang ? '_':'')+this.lang] = JSON.parse(val);
+        }
+
+        copyCurrentValueToClipboard(e) {
+            var field = e.target.getAttribute('field'),
+                type = e.target.getAttribute('type'),
+                localize = e.target.getAttribute('localize'),
+                fieldName = localize && this.lang ? field + "_" + this.lang : field,
+                clipboard = {
+                    value: this.entry[fieldName],
+                    type: type
+                };
+            localStorage.setItem('collections.entry.clipboard', JSON.stringify(clipboard));
+            console.log("copy", type, fieldName, clipboard);
+            App.ui.notify("Copied " + fieldName, "success");
+        }
+
+        pasteClipboardValue(e) {
+            var field = e.target.getAttribute('field'),
+                type = e.target.getAttribute('type'),
+                localize = e.target.getAttribute('localize'),
+                fieldName = localize && this.lang ? field + "_" + this.lang : field,
+                value = JSON.stringify(this.entry[fieldName]),
+                clipboardString = localStorage.getItem('collections.entry.clipboard'),
+                clipboard = clipboardString ? JSON.parse(clipboardString) : null;
+            console.log("paste", type, fieldName, clipboard);
+            if (clipboard === null) {
+                App.ui.notify("Nothing to paste!", "danger");
+            } else if(JSON.stringify(clipboard.value) === value) {
+                App.ui.notify("Clipboard value already present");
+            } else {
+                if (clipboard.type === type) {
+                    this.doPaste(fieldName, clipboard.value, value);
+                } else {
+                    App.ui.confirm("<div>Are you sure you want to paste?</div><div class='uk-text-large'>The copied value comes from a different field type: " + clipboard.type + "</div>", function(){
+                        $this.doPaste(fieldName, clipboard.value, value);
+                    });
+                }
+            }
+        }
+
+        doPaste(fieldName, newVal, undoVal) {
+            $this.undoValues[fieldName] = undoVal;
+            $this.entry[fieldName] = newVal;
+            App.ui.notify("Pasted into " + fieldName, "success");
+        }
+
+        undoPaste(e) {
+            var field = e.target.getAttribute('field'),
+                localize = e.target.getAttribute('localize'),
+                fieldName = localize && this.lang ? field + "_" + this.lang : field,
+                undoValue = this.undoValues[fieldName];
+            if (undoValue !== undefined) {
+               this.entry[fieldName] = JSON.parse(undoValue);
+               delete this.undoValues[fieldName];
+               App.ui.notify("Undid paste", "success");
+               console.log("undo", this.undoValues);
+            } else {
+                App.ui.notify("Could not undo!", "danger")
+            }
         }
 
         checkVisibilityRule(field) {
