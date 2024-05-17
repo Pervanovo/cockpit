@@ -231,7 +231,8 @@
                         var id = ids[i];
                         var result = results[i];
                         if (result.status !== "fulfilled") {
-                            rejected.push('<li class="uk-text-danger"><a target="_blank" href="/collections/entry/' + $this.collection.name + '/' + id + '">' + id + '</a>: ' + JSON.stringify(result.reason) + '</li>');
+                            var message = result && result.reason && result.reason.error && typeof result.reason.error === "string" ? result.reason.error : JSON.stringify(result);
+                            rejected.push('<li class="uk-text-danger"><a target="_blank" href="/collections/entry/' + $this.collection.name + '/' + id + '">' + id + '</a>: ' + message + '</li>');
                         }
                     }
                     App.ui.unblock();
