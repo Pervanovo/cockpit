@@ -353,7 +353,7 @@
         }
 
         this.batchedit = function() {
-            this.tags['entries-batchedit'].open(this.entries, this.selected)
+            this.tags['entries-batchedit'].open(this.selected)
         }
 
         this.changelanguage = function(e) {

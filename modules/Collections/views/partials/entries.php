@@ -674,7 +674,7 @@
 
         batchedit() {
             if (!this.lang) {
-                this.tags['entries-batchedit'].open(this.entries, this.selected);
+                this.tags['entries-batchedit'].open(this.selected);
             } else {
                 App.ui.notify("Cannot batch edit while in non-default language", "danger");
             }
