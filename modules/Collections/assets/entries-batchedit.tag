@@ -12,7 +12,7 @@
 
             <h3 class="uk-text-bold uk-flex uk-flex-middle">{ App.i18n.get('Batch edit') } <span class="uk-badge uk-margin-left">{selected.length} { App.i18n.get(selected.length == 1 ? 'Entry' : 'Entries') }</span></h3>
 
-            <div class="uk-margin-top uk-overflow-container uk-panel-space" if="{entries.length}">
+            <div class="uk-margin-top uk-overflow-container uk-panel-space" if="{!blocked}">
 
                 <div class="field-container uk-panel uk-margin {checked[field.name] && 'uk-panel-box uk-panel-card'}" each="{field in _fields}">
                     <div class="uk-grid">
@@ -20,8 +20,8 @@
                             <div class="uk-flex uk-flex-middle {field.$lang && 'uk-margin-left'}">
                                 <input class="uk-checkbox uk-margin-right" type="checkbox" onclick="{parent.toggleCheck}">
                                 <div>
-                                    <span class="uk-badge uk-badge-outline uk-margin-small-right {parent.checked[field.name] ? 'uk-text-bold':'uk-text-muted'}" title="{field.label || field.name}" if="{field.$lang}" data-uk-tooltip="pos:'right'">{field.$lang.code}</span>
                                     <span class="{parent.checked[field.name] ? 'uk-text-bold':'uk-text-muted'}" show="{!field.$lang}">{field.label || field.name}</span>
+                                    <span class="uk-badge uk-badge-outline uk-margin-small-right {parent.checked[field.name] ? 'uk-text-bold':'uk-text-muted'}" if="{field.localize}" title="{field.label || field.name}" data-uk-tooltip="pos:'right'">{field.$lang ? field.$lang.code : App.$data.languageDefaultLabel}</span>
                                     <div class="uk-margin-top uk-text-small uk-text-muted" show="{field.info && !field.$lang}">{ field.info}</div>
                                 </div>
                             </div>
@@ -118,11 +118,36 @@
             }
         }
 
-        this.open = function(entries, selected) {
-
-            this.entries = entries;
+        this.open = function(selected) {
+            this.blocked = true;
             this.selected = selected;
-            this.modal.show();
+            var ids = [];
+            for (var id of selected) {
+                ids.push({_id: id});
+            }
+            var data = {
+                collection: this.collection.name,
+                options: {
+                    filter: {
+                        "$or": ids
+                    },
+                    limit: selected.length
+                }
+            };
+            App.request('/collections/_find', data).then(function(response){
+                if(response.length < selected.length) {
+                    App.ui.notify("Could not find all selected entries, try again!", "danger");
+                } else {
+                    $this.entries = response;
+                    $this.modal.show();
+                }
+            }).catch(function(reason){
+                console.error(reason);
+                App.ui.notify("Something went wrong!", "danger");
+            }).finally(function(){
+                $this.blocked = false;
+                $this.update();
+            });
         }
 
         this.save = function() {
@@ -145,16 +170,16 @@
                     App.i18n.get('Fill in these required fields before saving:'),
                     '<div class="uk-margin-small-top">'+required.join(',')+'</div>'
                 ].join(''), 'danger');
-                return;
+            } else {
+                this.applyBatchEdit(this._entry);
+                this.modal.hide();
             }
 
-            this.applyBatchEdit(this._entry);
-            this.modal.hide();
         }
 
         this.applyBatchEdit = function(data) {
 
-            var promises = [], _filter = function(list) {
+            var promises = [], ids = [], _filter = function(list) {
 
                 var filtered = [];
 
@@ -185,28 +210,36 @@
                     }
 
                     var p = App.request('/collections/save_entry/'+$this.collection.name, {entry:tmpEntry});
-
-                    p.then(function(_entry) {
-
-                        if (entry) {
-                            _.extend(entry, _entry);
-                        }
-                    })
-
                     promises.push(p);
+                    ids.push(tmpEntry._id);
                 }
             });
 
-            if (promises.length) {
+            if (promises.length > 0) {
+                var done = 0;
 
-                this.blocked = true;
+                App.ui.block('<h1>Updating...</h1><div id="batch-progress" class="uk-active uk-progress uk-progress-striped"><div class="uk-progress-bar"></div></div>');
+                promises.forEach(function(p){
+                   p.finally(function(){
+                       $('#batch-progress .uk-progress-bar').css("width", 100*++done/promises.length + "%");
+                   });
+                });
 
-                Promise.all(promises).then(function(){
-                    App.ui.notify("Entries updated", "success");
-
-                    $this.blocked = false;
-                    $this.update();
-                    $this.parent.update();
+                Promise.allSettled(promises).then(function(results){
+                    var rejected = [];
+                    for (var i=0; i < results.length; i++) {
+                        var id = ids[i];
+                        var result = results[i];
+                        if (result.status !== "fulfilled") {
+                            rejected.push('<li class="uk-text-danger"><a target="_blank" href="/collections/entry/' + $this.collection.name + '/' + id + '">' + id + '</a>: ' + JSON.stringify(result.reason) + '</li>');
+                        }
+                    }
+                    App.ui.unblock();
+                    var body = rejected.length > 0 ? '<h2 class="uk-text-warning">Had some errors (' + rejected.length + ' of ' + promises.length + '):</h2>' : '<h1 class="uk-text-success">Great success!</h1>';
+                    body += rejected.length > 0 ? ('<ul>' + rejected.join('') + '</ul>') : '';
+                    body += '<p class="uk-text-bold"><a onclick="window.location.reload()">Reload the page</a> to see updated entries!</p>';
+                    body = '<div>' + body + '</div>';
+                    App.ui.block(body);
                 });
             }
 
