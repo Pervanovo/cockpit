@@ -421,10 +421,11 @@
                 fieldName = localize && this.lang ? field + "_" + this.lang : field,
                 clipboard = {
                     value: this.entry[fieldName],
+                    field: field,
                     type: type
                 };
             localStorage.setItem('collections.entry.clipboard', JSON.stringify(clipboard));
-            console.log("copy", type, fieldName, clipboard);
+            console.log("copy", field, type, fieldName, clipboard);
             App.ui.notify("Copied " + fieldName, "success");
         }
 
@@ -439,13 +440,15 @@
             console.log("paste", type, fieldName, clipboard);
             if (clipboard === null) {
                 App.ui.notify("Nothing to paste!", "danger");
+            } else if(clipboard.type !== type) {
+                App.ui.notify("Pasted value is not of same type!<br>" + clipboard.type + " (copied) != " + type, "danger");
             } else if(JSON.stringify(clipboard.value) === value) {
                 App.ui.notify("Clipboard value already present");
             } else {
-                if (clipboard.type === type) {
+                if (clipboard.field === field) {
                     this.doPaste(fieldName, clipboard.value, value);
                 } else {
-                    App.ui.confirm("<div>Are you sure you want to paste?</div><div class='uk-text-large'>The copied value comes from a different field type: " + clipboard.type + "</div>", function(){
+                    App.ui.confirm("<div>Are you sure you want to paste?</div><div class='uk-text-large'>The copied value comes from a different field: " + clipboard.field + "</div>", function(){
                         $this.doPaste(fieldName, clipboard.value, value);
                         $this.update();
                     });
