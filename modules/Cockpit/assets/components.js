@@ -3602,7 +3602,7 @@ riot.tag2('field-multipleselect', '<div if="{loading}"><i class="uk-icon-spinner
 
                         option = {
                             value: _.get(item, fieldVal),
-                            label: _.get(item, fieldLabel),
+                            label: fieldLabel.indexOf("{{") >= 0 ? UIkit.Utils.template(fieldLabel).call(item, item) : _.get(item, fieldLabel),
                             group: fieldGroup ? _.get(item, fieldGroup) : false,
                             level: 0
                         };
