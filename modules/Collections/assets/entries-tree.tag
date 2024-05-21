@@ -198,6 +198,7 @@
                     <li class="uk-nav-header">{ App.i18n.get('Actions') }</li>
                     <li><a href="{ App.route('/collections/entry/'+collection.name+'/'+entry._id) }">{ App.i18n.get('Edit') }</a></li>
                     <li><a class="uk-dropdown-close" onclick="{ duplicate}">{ App.i18n.get('Duplicate') }</a></li>
+                    <li><a class="uk-dropdown-close" href="{App.route('/collections/entry/'+collection.name+'?from='+entry._id)}">{ App.i18n.get('Create new from...') }</a></li>
                     <li class="uk-nav-divider"></li>
                     <li class="uk-nav-item-danger"><a onclick="{ remove }">{ App.i18n.get('Delete') }</a></li>
                 </ul>

@@ -90,7 +90,7 @@
 
         <div class="uk-grid-margin uk-width-medium-3-4 uk-width-large-4-5">
 
-            <form class="uk-form" if="{ fields.length }" onsubmit="{ submit }">
+            <form class="uk-form" if="{ fields.length && initialized }" onsubmit="{ submit }">
 
                 <div class="uk-grid uk-grid-match uk-grid-gutter" if="{ !preview }">
 
@@ -137,7 +137,8 @@
 
                 <cp-actionbar>
                     <div class="uk-container uk-container-center">
-                        <button show="{ !saving }" class="uk-button uk-button-large uk-button-primary">@lang('Save')</button>
+                        <button if="{entry._id}" show="{ !saving }" class="uk-button uk-button-large uk-button-primary">@lang('Save')</button>
+                        <button if="{!entry._id}" show="{ !saving }" class="uk-button uk-button-large uk-button-primary">@lang('Create')</button>
                         <button show="{ saving }" disabled class="uk-button uk-button-large uk-button-primary">
                             @lang('Saving')
                             <i class="uk-icon-spinner uk-icon-spin"></i>
@@ -228,6 +229,7 @@
         this.groups       = {Main:[]};
         this.group        = '';
 
+        this.initialized = false;
         this.saving = false;
         this.undoValues = {};
         this.blacklistedCopyTypes = ["uniqueid", "specifications", "object", "wysiwyg", "code"];
@@ -286,6 +288,24 @@
         });
 
         this.on('mount', function(){
+            var copyFrom = App.Utils.params("from");
+            if (copyFrom) {
+                App.ui.block("Loading source entry...");
+                App.request('/collections/find', {collection: $this.collection.name, options: {limit:1, filter: {_id: copyFrom}}}).then(function(result){
+                    var source = result.entries[0];
+                    ["_id", "_created", "_modified", "_by", "_mby"].forEach(function(fieldName){
+                        delete source[fieldName];
+                    });
+                    _.merge($this.entry, source);
+                }).finally(function(){
+                    App.ui.unblock();
+                    $this.initialized = true;
+                    $this.update();
+                    parent.update();
+                });
+            } else {
+                this.initialized = true;
+            }
 
             // bind global command + save
             Mousetrap.bindGlobal(['command+s', 'ctrl+s'], function(e) {

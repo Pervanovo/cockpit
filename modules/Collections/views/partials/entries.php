@@ -184,6 +184,7 @@
                                     @if($app->module('collections')->hasaccess($collection['name'], 'entries_create'))
                                     <li class="uk-nav-divider"></li>
                                     <li><a class="uk-dropdown-close" onclick="{ parent.duplicateEntry }">@lang('Duplicate')</a></li>
+                                    <li><a class="uk-dropdown-close" href="@route('/collections/entry/'.$collection['name'])?from={ entry._id }">@lang('Create new from...')</a></li>
                                     @endif
                                 </ul>
                             </div>
@@ -254,6 +255,7 @@
                                         @if($app->module('collections')->hasaccess($collection['name'], 'entries_create'))
                                         <li class="uk-nav-divider"></li>
                                         <li><a class="uk-dropdown-close" onclick="{ parent.duplicateEntry }">@lang('Duplicate')</a></li>
+                                        <li><a class="uk-dropdown-close" href="@route('/collections/entry/'.$collection['name'])?from={ entry._id }">@lang('Create new from...')</a></li>
                                         @endif
                                     </ul>
                                 </div>
