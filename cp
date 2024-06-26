@@ -1,5 +1,7 @@
 #!/usr/bin/env php
 <?php
+posix_setuid(100); //nginx
+posix_setgid(101); //nginx
 
 if (PHP_SAPI !== 'cli') {
     exit('Script needs to be run from Command Line Interface (cli)');
