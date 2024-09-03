@@ -68,9 +68,7 @@
     };
 
     App.Utils.interpolate = function (str, params) {
-        const names = Object.keys(params);
-        const vals = Object.values(params);
-        return new Function(...names, `return \`${str}\`;`)(...vals);
+        return _.template(str)(params);
     };
 
     App.Utils.copyText = function (text, cb) {
