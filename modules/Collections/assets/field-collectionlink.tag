@@ -519,7 +519,12 @@
                 return item[field] || "";
             }).join(', ');
         } else {
-            val = item[display] || App.Utils.interpolate(display, item);
+            try {
+                val = item[display] || App.Utils.interpolate(display, item);
+            } catch(e) {
+                console.error(e);
+                val = 'n/a';
+            }
         }
 
         cache[cacheKey] = val;
