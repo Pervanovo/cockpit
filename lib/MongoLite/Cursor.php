@@ -1,12 +1,4 @@
 <?php
-/**
- * This file is part of the Cockpit project.
- *
- * (c) Artur Heinze - 🅰🅶🅴🅽🆃🅴🅹🅾, http://agentejo.com
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
 
 namespace MongoLite;
 
@@ -18,42 +10,42 @@ class Cursor implements \Iterator {
     /**
      * @var boolean|integer
      */
-    protected $position = false;
+    protected bool|int $position = false;
 
     /**
      * @var array
      */
-    protected $data = [];
+    protected array $data = [];
 
     /**
      * @var Collection object
      */
-    protected $collection;
+    protected Collection $collection;
 
     /**
      * @var string|null
      */
-    protected $criteria;
+    protected ?string $criteria;
 
     /**
      * @var array|null
      */
-    protected $projection;
+    protected ?array $projection;
 
     /**
      * @var null|integer
      */
-    protected $limit;
+    protected ?int $limit = null;
 
     /**
      * @var null|integer
      */
-    protected $skip;
+    protected ?int $skip = null;
 
     /**
      * @var null|array
      */
-    protected $sort;
+    protected ?array $sort = null;
 
     /**
      * Constructor
@@ -61,7 +53,7 @@ class Cursor implements \Iterator {
      * @param object $collection
      * @param mixed $criteria
      */
-    public function __construct($collection, $criteria, $projection = null) {
+    public function __construct(Collection $collection, mixed $criteria, ?array $projection = null) {
         $this->collection  = $collection;
         $this->criteria    = $criteria;
         $this->projection  = $projection;
@@ -72,7 +64,7 @@ class Cursor implements \Iterator {
      *
      * @return integer
      */
-    public function count() {
+    public function count(): int {
 
         if (!$this->criteria) {
 
@@ -99,12 +91,12 @@ class Cursor implements \Iterator {
     /**
      * Set limit
      *
-     * @param  mixed $limit
+     * @param  int $limit
      * @return object       Cursor
      */
-    public function limit($limit) {
+    public function limit(?int $limit): self {
 
-        $this->limit = intval($limit);
+        $this->limit = $limit;
 
         return $this;
     }
@@ -115,7 +107,7 @@ class Cursor implements \Iterator {
      * @param  mixed $sorts
      * @return object       Cursor
      */
-    public function sort($sorts) {
+    public function sort(?array $sorts): self {
 
         $this->sort = $sorts;
 
@@ -125,10 +117,10 @@ class Cursor implements \Iterator {
     /**
      * Set skip
      *
-     * @param  mixed $skip
+     * @param  int $skip
      * @return object       Cursor
      */
-    public function skip($skip) {
+    public function skip(?int $skip): self {
 
         $this->skip = $skip;
 
@@ -141,9 +133,10 @@ class Cursor implements \Iterator {
      * @param  mixed $callable
      * @return object
      */
-    public function each($callable) {
+    public function each(mixed $callable): self {
 
-        foreach ($this->rewind() as $document) {
+
+        foreach ($this->current() as $document) {
             $callable($document);
         }
 
@@ -155,7 +148,7 @@ class Cursor implements \Iterator {
      *
      * @return array
      */
-    public function toArray() {
+    public function toArray(): array {
         return $this->getData();
     }
 
@@ -165,7 +158,7 @@ class Cursor implements \Iterator {
      *
      * @return array
      */
-    protected function getData() {
+    protected function getData(): array {
 
         $conn = $this->collection->database->connection;
         $sql = ['SELECT document FROM '.$conn->quote($this->collection->name)];
@@ -198,45 +191,12 @@ class Cursor implements \Iterator {
         $result    = $stmt->fetchAll( \PDO::FETCH_ASSOC);
         $documents = [];
 
-        if (!$this->projection) {
+        foreach ($result as &$doc) {
+            $documents[] = \json_decode($doc['document'], true);
+        }
 
-            foreach ($result as &$doc) {
-                $documents[] = \json_decode($doc['document'], true);
-            }
-
-        } else {
-
-            $exclude = [];
-            $include = [];
-
-            foreach ($this->projection as $key => $value) {
-
-                if ($value) {
-                    $include[$key] = 1;
-                } else {
-                    $exclude[$key] = 1;
-                }
-            }
-
-            foreach ($result as &$doc) {
-
-                $item = \json_decode($doc['document'], true);
-                $id   = $item['_id'];
-
-                if ($exclude) {
-                    $item = \array_diff_key($item, $exclude);
-                }
-
-                if ($include) {
-                    $item = array_key_intersect($item, $include);
-                }
-
-                if (!isset($exclude['_id'])) {
-                    $item['_id'] = $id;
-                }
-
-                $documents[] = $item;
-            }
+        if (is_array($this->projection)) {
+            $documents = Projection::onDocuments($documents, $this->projection);
         }
 
         return $documents;
@@ -245,27 +205,27 @@ class Cursor implements \Iterator {
     /**
      * Iterator implementation
      */
-    public function rewind() {
+    public function rewind(): void {
 
         if ($this->position!==false) {
             $this->position = 0;
         }
     }
 
-    public function current() {
+    public function current(): array {
 
         return $this->data[$this->position];
     }
 
-    public function key() {
+    public function key(): int {
         return $this->position;
     }
 
-    public function next() {
+    public function next(): void {
         ++$this->position;
     }
 
-    public function valid() {
+    public function valid(): bool {
 
         if ($this->position===false) {
 
@@ -276,15 +236,4 @@ class Cursor implements \Iterator {
         return isset($this->data[$this->position]);
     }
 
-}
-
-function array_key_intersect(&$a, &$b) {
-
-    $array = [];
-
-    foreach ($a as $key => $value) {
-        if (isset($b[$key])) $array[$key] = $value;
-    }
-
-    return $array;
 }

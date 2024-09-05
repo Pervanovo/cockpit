@@ -12,6 +12,7 @@
 namespace Cockpit\Helper;
 
 use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 class Csrf extends \Lime\Helper {
 
@@ -28,7 +29,7 @@ class Csrf extends \Lime\Helper {
             $payload['exp'] = $expire;
         }
 
-        $token = JWT::encode($payload, $this->app['sec-key']);
+        $token = JWT::encode($payload, $this->app['sec-key'], 'HS256');
 
         $this->app->helper('session')->write("cockpit.csrf.token.{$key}", $token);
 
@@ -54,7 +55,7 @@ class Csrf extends \Lime\Helper {
 
         if ($checkpayload) {
             try {
-                $payload = JWT::decode($token, $this->app['sec-key'], ['HS256']);
+                $payload = JWT::decode($token, new Key($this->app['sec-key'], 'HS256'));
                 return isset($payload->csrf) && $payload->csrf == $key;
             } catch(\Exception $e) {
                 return false;
@@ -68,7 +69,7 @@ class Csrf extends \Lime\Helper {
         }
 
         try {
-            $token = JWT::decode($token, $this->app['sec-key'], ['HS256']);
+            $token = JWT::decode($token, new Key($this->app['sec-key'], 'HS256'));
         } catch(\Exception $e) {
             return false;
         }

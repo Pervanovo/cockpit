@@ -14,31 +14,31 @@ namespace LimeExtra\Helper;
 class Filesystem extends \Lime\Helper {
 
     /**
-     * @return mixed
+     * @return ?string
      */
-    public function path($path) {
+    public function path(string $path): ?string {
         return $this->app->path($path);
     }
 
     /**
      * @return array
      */
-    public function ls() {
+    public function ls(): array {
         $pattern = null;
         $dir     = null;
 
         $args = \func_get_args();
         $lst  = [];
 
-        switch(\count($args)){
+        switch(\count($args)) {
             case 0:
                 $dir = \getcwd();
             case 1:
-                $dir = (\strpos($args[0], ':')) ? $this->app->path($args[0]) : $args[0];
+                $dir = (\str_contains($args[0], ':')) ? $this->app->path($args[0]) : $args[0];
                 break;
             case 2:
                 $pattern = $args[0];
-                $dir = (\strpos($args[1], ':')) ? $this->app->path($args[1]) : $args[1];
+                $dir = (\str_contains($args[1], ':')) ? $this->app->path($args[1]) : $args[1];
                 break;
             default:
                 return $lst;
@@ -65,7 +65,7 @@ class Filesystem extends \Lime\Helper {
     /**
      * @return bool|mixed
      */
-    public function read() {
+    public function read(): mixed {
 
         $args = \func_get_args();
 
@@ -73,7 +73,7 @@ class Filesystem extends \Lime\Helper {
             return false;
         }
 
-        $args[0] = \strpos($args[0], ':') ? $this->app->path($args[0]) : $args[0];
+        $args[0] = \str_contains($args[0], ':') ? $this->app->path($args[0]) : $args[0];
 
         return $args[0] ? \call_user_func_array('file_get_contents', $args) : '';
     }
@@ -81,7 +81,7 @@ class Filesystem extends \Lime\Helper {
     /**
      * @return bool|mixed
      */
-    public function write() {
+    public function write(): mixed {
 
         $args = \func_get_args();
 
@@ -89,7 +89,7 @@ class Filesystem extends \Lime\Helper {
             return false;
         }
 
-        if (\strpos($args[0], ':') !== false && !$this->app->isAbsolutePath($args[0])) {
+        if (\str_contains($args[0], ':') && !$this->app->isAbsolutePath($args[0])) {
 
             list($namespace, $additional) = \explode(":",$args[0], 2);
 
@@ -113,10 +113,10 @@ class Filesystem extends \Lime\Helper {
      * @param int $mode
      * @return bool
      */
-    public function mkdir($path, $mode = 0755) {
+    public function mkdir(string $path, int $mode = 0755): bool {
 
-        if (\strpos($path, ':') !== false && !$this->app->isAbsolutePath($path)) {
-            list($namespace, $additional) = \explode(":", $path, 2);
+        if (\str_contains($path, ':') && !$this->app->isAbsolutePath($path)) {
+            list($namespace, $additional) = \explode(':', $path, 2);
             $dir = $this->app->path("{$namespace}:").$additional;
         } else {
             $dir = $path;
@@ -133,9 +133,13 @@ class Filesystem extends \Lime\Helper {
      * @param $path
      * @throws \Exception
      */
-    public function delete($path) {
+    public function delete(string $path): void {
 
         $path = $this->app->path($path);
+
+        if (is_null($path)) {
+            return;
+        }
 
         if (\is_file($path) || \is_link($path)) {
             $func = DIRECTORY_SEPARATOR === '\\' && \is_dir($path) ? 'rmdir' : 'unlink';
@@ -158,11 +162,11 @@ class Filesystem extends \Lime\Helper {
      * @param bool|true $_init
      * @return bool
      */
-    public function copy($path, $dest, $_init = true) {
+    public function copy(string $path, string $dest, bool $_init = true): bool {
 
         if ($_init) {
-            if (\strpos($path, ':')) $path = $this->app->path($path);
-            if (\strpos($dest, ':')) $dest = $this->app->path($dest);
+            if (\str_contains($path, ':')) $path = $this->app->path($path);
+            if (\str_contains($dest, ':')) $dest = $this->app->path($dest);
         }
 
         if (\is_dir($path)) {
@@ -200,7 +204,7 @@ class Filesystem extends \Lime\Helper {
      * @return bool
      * @throws \Exception
      */
-    public function rename($path, $newpath, $overwrite = true) {
+    public function rename(string $path, string $newpath, bool $overwrite = true): bool {
 
         $path = $this->app->path($path);
 
@@ -214,7 +218,7 @@ class Filesystem extends \Lime\Helper {
             $this->mkdir(dirname($newpath));
             $this->delete($newpath);
             if (!@\rename($path, $newpath)) {
-               return false;
+                return false;
             }
         }
 
@@ -225,7 +229,7 @@ class Filesystem extends \Lime\Helper {
      * @param $dir
      * @return int
      */
-    public function getDirSize($dir) {
+    public function getDirSize(string $dir): int {
 
         $size = 0;
 
@@ -249,7 +253,7 @@ class Filesystem extends \Lime\Helper {
      * @param bool|false $selfremove
      * @return bool
      */
-    public function removeEmptySubFolders($dir, $selfremove = false) {
+    public function removeEmptySubFolders(string $dir, bool $selfremove = false): bool {
 
         if ($path = $this->app->path($dir)) {
 
@@ -275,27 +279,27 @@ class FileObject {
     protected $path;
     protected $fileObject;
 
-    public function __construct($path) {
+    public function __construct(string $path) {
         $this->path = $path;
     }
 
-    public function getFilename() {
+    public function getFilename(): string {
         return \basename($this->path);
     }
 
-    public function getPathName() {
+    public function getPathName(): string {
         return $this->path;
     }
 
-    public function getRealPath() {
+    public function getRealPath(): string {
         return \realpath($this->path);
     }
 
-    public function getBasename($suffix = null) {
-        return \basename($this->path, $suffix);
+    public function getBasename(?string $suffix = null): string {
+        return $this->path ? \basename($this->path, $suffix ?? '') : '';
     }
 
-    public function getSize() {
+    public function getSize(): int {
         return \filesize($this->path);
     }
 
@@ -311,7 +315,7 @@ class FileObject {
 
 
 if (!function_exists('fnmatch')) {
-    function fnmatch($pattern, $string){
+    function fnmatch(string $pattern, string $string): bool {
         return \preg_match("#^".\strtr(\preg_quote($pattern, '#'), ['\*' => '.*', '\?' => '.'])."$#i", $string);
     }
 }
