@@ -771,7 +771,7 @@ if (COCKPIT_API_REQUEST) {
         $filtered = array_map(function ($item) {
             if (!is_array($item)) {
                 return $item;
-            } else if ($item['settings']['disabled']) {
+            } else if ($item['settings']['disabled'] ?? false) {
                 return null;
             }
             unset($item['settings']['disabled']);
