@@ -77,7 +77,7 @@ $this->module('cockpit')->extend([
         $app('session')->delete('cockpit.app.auth');
 
         // prevent session fixation attacks
-        session_regenerate_id(true);
+        @session_regenerate_id(true);
     },
 
     'hasaccess' => function($resource, $action, $group = null) use($app) {
