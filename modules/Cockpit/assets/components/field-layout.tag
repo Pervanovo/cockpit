@@ -577,7 +577,7 @@
                     }
                 }
 
-                return (def.options.preview && def.options.preview(component.settings || {}, component, def)) || '';
+                return (def.options.preview && typeof def.options.preview === 'function' && def.options.preview(component.settings || {}, component, def)) || '';
             }
 
             if (['heading', 'button'].indexOf(component.component) > -1) {
