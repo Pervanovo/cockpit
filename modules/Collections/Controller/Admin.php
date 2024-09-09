@@ -430,7 +430,7 @@ class Admin extends \Cockpit\AuthController {
         \session_write_close();
 
         $collection = $this->app->param('collection');
-        $options    = $this->app->param('options');
+        $options    = $this->app->param('options') ?? [];
 
         if (!$collection) return false;
 
