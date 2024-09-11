@@ -305,6 +305,8 @@
                 });
             } else {
                 this.initialized = true;
+                $this.update();
+                parent.update();
             }
 
             // bind global command + save
