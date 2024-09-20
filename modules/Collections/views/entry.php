@@ -301,12 +301,10 @@
                     App.ui.unblock();
                     $this.initialized = true;
                     $this.update();
-                    parent.update();
                 });
             } else {
                 this.initialized = true;
                 $this.update();
-                parent.update();
             }
 
             // bind global command + save
