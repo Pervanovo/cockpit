@@ -10,7 +10,8 @@
 
         if (Array.isArray(v)) {
             if (v.length > 1) {
-                return `<span class="uk-badge ${!v.length && 'uk-badge-outline uk-text-muted'}">${v.length}</span>`;
+                const title = v.map(item => item.display).join("<br/>");
+                return `<span class="uk-badge ${!v.length && 'uk-badge-outline uk-text-muted'}" title="${title}" data-uk-tooltip="{pos:'right'}">${v.length}</span>`;
             }
             v = v[0];
         }
