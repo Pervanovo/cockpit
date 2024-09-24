@@ -1116,7 +1116,10 @@ class App implements \ArrayAccess {
                 $pfx = \is_bool($prefix) ? \strtolower(basename($dir)) : $prefix;
 
                 // load modules
-                foreach (new \DirectoryIterator($dir) as $module) {
+                $iter = new \DirectoryIterator($dir);
+                while ($iter->valid()) {
+                    $module = $iter->current();
+                    $iter->next();
 
                     if ($module->isFile() || $module->isDot()) continue;
 

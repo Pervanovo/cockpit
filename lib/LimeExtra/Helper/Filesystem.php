@@ -50,7 +50,9 @@ class Filesystem extends \Lime\Helper {
 
         $iter = new \DirectoryIterator($dir);
 
-        foreach ($iter as $file) {
+        while ($iter->valid()) {
+            $file = $iter->current();
+            $iter->next();
 
             if ($file->isDot()) continue;
             if ($pattern && !fnmatch($pattern, $file->getBasename())) continue;
@@ -147,7 +149,10 @@ class Filesystem extends \Lime\Helper {
                 throw new \Exception("Unable to delete: {$path}.");
             }
         } elseif (\is_dir($path)) {
-            foreach (new \FilesystemIterator($path) as $item) {
+            $iterator = new \FilesystemIterator ($path);
+            while ($iterator->valid()) {
+                $item = $iterator->current();
+                $iterator->next();
                 $this->delete($item->getRealPath());
             }
             if (!@rmdir($path)) {
@@ -237,7 +242,9 @@ class Filesystem extends \Lime\Helper {
 
             $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path), \RecursiveIteratorIterator::SELF_FIRST);
 
-            foreach ($files as $file) {
+            while ($files->valid()) {
+                $file = $files->current();
+                $files->next();
 
                 if (!$file->isFile() || $file->isLink()) continue;
 

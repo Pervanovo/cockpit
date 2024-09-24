@@ -42,7 +42,9 @@ $this->module('cockpit')->extend([
             $path = $app->path($dir);
             $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path), \RecursiveIteratorIterator::SELF_FIRST);
 
-            foreach ($files as $file) {
+            while ($files->valid()) {
+                $file = $files->current();
+                $files->next();
 
                 if (!$file->isFile()) continue;
                 if (preg_match('/(\.gitkeep|\.gitignore|index\.html)$/', $file)) continue;

@@ -48,7 +48,10 @@ class Client {
         // Return all databases available on disk
         $databases = [];
 
-        foreach (new \DirectoryIterator($this->path) as $fileInfo) {
+        $iter = new \DirectoryIterator($this->path);
+        while ($iter->valid()) {
+            $fileInfo = $iter->current();
+            $iter->next();
             if ($fileInfo->getExtension() === 'sqlite') {
                 $databases[] = $fileInfo->getBasename('.sqlite');
             }
