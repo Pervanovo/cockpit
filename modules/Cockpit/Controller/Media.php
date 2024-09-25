@@ -55,9 +55,8 @@ class Media extends \Cockpit\AuthController {
             if (file_exists($dir)){
 
                 $iter = new \DirectoryIterator($dir);
-                while ($iter->valid()) {
+                for (; $iter->valid(); $iter->next()) {
                     $file = $iter->current();
-                    $iter->next();
 
                     if ($file->isDot()) continue;
                     if ($file->isDir() && $file->getRealPath() == $cpfolder && !$isSuperAdmin ) continue;
@@ -401,9 +400,8 @@ class Media extends \Cockpit\AuthController {
         $files  = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($folder), \RecursiveIteratorIterator::LEAVES_ONLY);
         $zip    = new \ZipStream\ZipStream("{$prefix}.zip");
 
-        while ($files->valid()) {
+        for (; $files->valid(); $files->next()) {
             $file = $files->current();
-            $files->next();
 
             if ($file->isDir()) continue;
 
@@ -429,9 +427,8 @@ class Media extends \Cockpit\AuthController {
         $toignore = '/('.implode('|',$toignore).')/i';
 
         $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->root));
-        while ($iterator->valid()) {
+        for (; $iterator->valid(); $iterator->next()) {
             $file = $iterator->current();
-            $iterator->next();
 
             if ($file->isDir()) continue;
 

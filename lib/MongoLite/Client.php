@@ -49,9 +49,8 @@ class Client {
         $databases = [];
 
         $iter = new \DirectoryIterator($this->path);
-        while ($iter->valid()) {
+        for (; $iter->valid(); $iter->next()) {
             $fileInfo = $iter->current();
-            $iter->next();
             if ($fileInfo->getExtension() === 'sqlite') {
                 $databases[] = $fileInfo->getBasename('.sqlite');
             }

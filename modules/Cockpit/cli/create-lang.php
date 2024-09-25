@@ -27,9 +27,8 @@ foreach ($dirs as $dir) {
 
     $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(COCKPIT_DIR.'/modules'), RecursiveIteratorIterator::SELF_FIRST);
 
-    while ($iterator->valid()) {
+    for (; $iterator->valid(); $iterator->next()) {
         $file = $iterator->current();
-        $iterator->next();
 
         if (in_array($file->getExtension(), $extensions)) {
 

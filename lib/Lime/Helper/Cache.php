@@ -74,9 +74,8 @@ class Cache extends \Lime\Helper {
 
         $iterator = new \RecursiveDirectoryIterator($this->cachePath);
 
-        while ($iterator->valid()) {
+        for (; $iterator->valid(); $iterator->next()) {
             $file = $iterator->current();
-            $iterator->next();
             if ($file->isFile() && \substr($file, -6)==".cache") {
                 @\unlink($this->cachePath.$file->getFilename());
             }

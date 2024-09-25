@@ -63,9 +63,8 @@ $addonRoot = null;
 
 // find addon root
 $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator("{$tmppath}/extract-{$zipname}"));
-while ($iterator->valid()) {
+for (; $iterator->valid(); $iterator->next()) {
     $file = $iterator->current();
-    $iterator->next();
     
     if ($file->getFilename() == 'bootstrap.php') {
         $addonRoot = dirname($file->getRealPath());
